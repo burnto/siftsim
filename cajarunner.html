@@ -1,0 +1,125 @@
+<html>
+  <head>
+    <title>A simple host page for Caja gadgets</title>
+  
+    <!-- In ant-lib/com/google/caja/plugin/ -->
+    <script src="javascripts/caja/html-sanitizer-minified.js"></script>
+    <script src="javascripts/caja/domita-minified.js"></script>
+  
+    <script>
+    (function(){
+      // Give the module a variable into which it can export the valija maker
+      var imports = ___.getNewModuleHandler().getImports();
+      imports.loader = {provide:___.func(function(v){valijaMaker = v;})};
+    })();
+    </script>
+
+    <!-- In ant-lib/com/google/caja/plugin/ -->
+    <script src="javascripts/caja/valija.co.js"></script>
+  
+    <script>
+      var initValija = function(divId, extraOuters) {
+        // Make a copy of the standard objects
+        var imports = ___.copy(___.sharedImports);
+      
+        // Reify the imports for use by Valija
+        imports.outers = imports;
+      
+        // Create a fake document object, attach it to the given div,
+        // and put a reference in imports
+        var htmlContainer = document.getElementById(divId);
+        imports.htmlEmitter___ = new HtmlEmitter(htmlContainer);
+        imports.getCssContainer___ = function () {
+          return htmlContainer;
+        };
+        
+        // The function attachDocumentStub() copies each property of
+        // imports.outers to tameWindow, a constructed object, then sets 
+        //   imports.outers = tameWindow
+        // so after this call, imports.outers !== imports.  Also, if
+        // you set a property on imports.outers after this point, 
+        // you have to grant access to it explicitly.
+        attachDocumentStub(
+            "-" + divId,
+            // Don't proxy urls
+            { rewrite: function(uri, mimetype) { return uri; } },
+            imports,
+            document.getElementById(divId));
+          
+        // Add the extra, possibly shared state
+        for (var i in extraOuters) {
+          if (!i.match(/___$/)) { 
+            imports.outers[i] = extraOuters[i]; 
+            if (typeof imports.outers[i] === "function") {
+              // This taming assumes that functions don't use the keyword "this". 
+              ___.grantFunc(imports.outers, i);
+            }
+          }
+        }
+
+        // Create the Valija runtime instance
+        // This must be called after attachDocumentStub().
+        imports.$v = valijaMaker.CALL___(imports.outers);
+
+        // Use these imports
+        ___.getNewModuleHandler().setImports(imports);
+      };
+    </script>
+  </head>
+  <body>
+    <script>
+      // Some state to share between the gadgets
+      var shared = (function (x) {
+        return { 
+            get: ___.func(function () { return x; }),
+            set: ___.func(function (y) { x = String(y); })
+          };
+      })("");
+    </script>
+      
+    <script>
+      // Code for capturing, restoring, and calling a module function
+      // for sharing code between gadgets but having isolated instances
+      var sharedCode = (function () {
+        var oldModuleHandler = ___.getNewModuleHandler();
+        var module;
+        var capturingModuleHandler = ___.freeze({
+            handle: ___.frozenFunc(function handleOnly(newModule) {
+              module = newModule;
+            })});
+        return {
+            capture: function() { ___.setNewModuleHandler(capturingModuleHandler); },
+            restore: function() { ___.setNewModuleHandler(oldModuleHandler); },
+            inject: function() { module.instantiate(___, oldModuleHandler.getImports()); }
+          };
+      })();
+      
+      // Prepare to capture the module function of the library
+      sharedCode.capture();
+    </script>
+    <!-- Load the library code -->
+    <script src="javascripts/siftables.js"></script>
+
+    <div id="gadget1" class="gadget1"></div>  
+    <script>
+      // Restore the default new-module handler
+      sharedCode.restore();
+
+      // Set up the valija instance for gadget1 
+      // and grant access to the getter
+      initValija("gadget1", {get : shared.get});
+
+      // Create an instance of the library in gadget1's environment
+      sharedCode.inject();
+    </script>
+    <!-- Load the gadget -->
+    <script src="gadget1.vo.js"></script>
+
+    <div id="gadget2" class="gadget2"></div>
+    <script>
+      initValija("gadget2", {set : shared.set});
+      sharedCode.inject();
+    </script>
+    <script src="gadget2.vo.js"></script>
+  </body>
+</html>

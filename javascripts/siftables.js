@@ -10,6 +10,12 @@ var SiftSim = function() {
     return s;
   }
   
+  function tick() {
+    $.each(siftables, function() {
+      this._tick()
+    });
+  }
+  
   return {
     init: function(_container, _options) {
       options = {
