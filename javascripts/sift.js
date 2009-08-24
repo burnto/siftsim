@@ -141,13 +141,17 @@ Sift.AppRunner = function() {
   var paused = false;
   var siftEnv;
   
+  var timestamp;
+  
   function loopAndRepeat() {
+    timestamp = new Date();
     if(!paused) {
       siftEnv.loop();
       if(app.loop)
         app.loop(siftEnv);
     }
-    setTimeout(loopAndRepeat, 1000 / frameRate)
+    var n = new Date() - timestamp;
+    setTimeout(loopAndRepeat, (1000 / frameRate) - n)
   }
   
   function createSiftInterface() {

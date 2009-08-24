@@ -11,7 +11,7 @@ var App = function() {
     setup: function(appRunner) {
       siftables = appRunner.siftables;
       flock = new Flock()
-      for(var i = 0; i < 30; i++) {
+      for(var i = 0; i < 40; i++) {
         flock.addBoid(new Boid(appRunner.siftables[0], new Vector(128/2, 128/2)))
       }
     },
@@ -21,9 +21,9 @@ var App = function() {
       //   console.log(i);
       // })
       $.each(siftables, function(i) {
-        
-        siftables[i].ctx.clearRect(0,0,128,128)
-        siftables[i].ctx.clearRect(0,0,128,128)
+        var ctx = siftables[i].ctx;
+        ctx.fillStyle = "rgb(0,0,0)";
+        ctx.fillRect(0,0,128,128)
       })
       flock.run();
     }
@@ -51,7 +51,7 @@ function Boid(_siftable, _loc) {
   this.acc = new Vector(0,0)
   this.vel = new Vector(Math.random() * 2 - 1, Math.random() * 2 - 1);
   this.loc = _loc;
-  this.r = 2;
+  this.r = 3;
   this.maxspeed = 5.0;
   this.maxforce = 0.1;
 }
@@ -71,9 +71,9 @@ Boid.prototype = {
     // sep.mult(2.0);
     // ali.mult(1.0);
     // coh.mult(1.0);
-    sep.mult(2.0);
-    ali.mult(2.0);
-    coh.mult(2.0);
+    sep.mult(7.0);
+    ali.mult(5.0);
+    coh.mult(1.0);
     // Add the force vectors to acceleration
     this.acc.add(sep);
     this.acc.add(ali);
@@ -122,21 +122,53 @@ Boid.prototype = {
   
   borders: function() {
     if (this.loc.x < -this.r) {
-      this.siftable = (this.siftable.neighbors.left || this.siftable.furthest("right") || this.siftable);
-      this.loc.x = 128 + this.r;
+      if(this.siftable.neighbors.left) {
+        this.siftable = this.siftable.neighbors.left;
+        this.loc.x = 128 + this.r;
+      }else{
+        this.vel.reflect("y")
+      }
     }else if (this.loc.x > 128+this.r) {
-      this.siftable = (this.siftable.neighbors.right || this.siftable.furthest("left") || this.siftable);
-      this.loc.x = -this.r;
+      if(this.siftable.neighbors.right) {
+        this.siftable = this.siftable.neighbors.right;
+        this.loc.x = -this.r;
+      }else{
+        this.vel.reflect("y")
+      }
     }
     if (this.loc.y < -this.r) {
-      this.siftable = (this.siftable.neighbors.top || this.siftable.furthest("bottom") || this.siftable);
-      this.loc.y = 128 + this.r;
+      if(this.siftable.neighbors.top) {
+        this.siftable = this.siftable.neighbors.top;
+        this.loc.y = 128 + this.r;
+      }else{
+        this.vel.reflect("x")
+      }
     }
     if (this.loc.y > 128+this.r) {
-      this.siftable = (this.siftable.neighbors.bottom || this.siftable.furthest("top") || this.siftable);
-      this.loc.y = -this.r;
+      if(this.siftable.neighbors.bottom) {
+        this.siftable = this.siftable.neighbors.bottom;
+        this.loc.y = -this.r;
+      }else{
+        this.vel.reflect("x")
+      }
     }
+    // if (this.loc.x < -this.r) {
+    //   this.siftable = (this.siftable.neighbors.left || this.siftable.furthest("right") || this.siftable);
+    //   this.loc.x = 128 + this.r;
+    // }else if (this.loc.x > 128+this.r) {
+    //   this.siftable = (this.siftable.neighbors.right || this.siftable.furthest("left") || this.siftable);
+    //   this.loc.x = -this.r;
+    // }
+    // if (this.loc.y < -this.r) {
+    //   this.siftable = (this.siftable.neighbors.top || this.siftable.furthest("bottom") || this.siftable);
+    //   this.loc.y = 128 + this.r;
+    // }
+    // if (this.loc.y > 128+this.r) {
+    //   this.siftable = (this.siftable.neighbors.bottom || this.siftable.furthest("top") || this.siftable);
+    //   this.loc.y = -this.r;
+    // }
   },
+
   
   separate: function(boids) {
      desiredseparation = 25.0;
@@ -147,7 +179,7 @@ Boid.prototype = {
        other = boids[i];
        d = this.loc.dist(other.loc);
        // If the distance is greater than 0 and less than an arbitrary amount (0 when you are yourself)
-       if ((d > 0) && (d < desiredseparation)) {
+       if ((d > 0) && (d < desiredseparation) && (other.siftable == this.siftable)) {
          // Calculate vector pointing away from neighbor
          diff = Vector.sub(this.loc,other.loc);
          diff.normalize();
@@ -172,7 +204,7 @@ Boid.prototype = {
     for(var i in boids) {
       other = boids[i];
       d = this.loc.dist(other.loc);
-      if ((d > 0) && (d < neighbordist)) {
+      if ((d > 0) && (d < neighbordist) && (other.siftable == this.siftable)) {
         sum.add(other.vel);
         count++;
       }
@@ -185,13 +217,13 @@ Boid.prototype = {
   },
   
   cohesion: function(boids) {
-    neighbordist = 10.0;
+    neighbordist = 50.0;
     sum = new Vector(0,0);   // Start with empty vector to accumulate all locations
     count = 0;
     for(var i in boids) {
       other = boids[i];
       d = this.loc.dist(other.loc);
-      if ((d > 0) && (d < neighbordist)) {
+      if ((d > 0) && (d < neighbordist) && (other.siftable == this.siftable)) {
         sum.add(other.loc); // Add location
         count++;
       }
@@ -281,6 +313,19 @@ Vector.prototype = {
     if(mag > m) {
       var d = m/mag;
       this.mult(d);
+    }
+  },
+  
+  heading2d: function() {
+    
+  },
+  
+  reflect: function(axis) {
+    for(var i in Vector.c) {
+      i = Vector.c[i]
+      if(i != axis) {
+        this[i] = -this[i];
+      }
     }
   }
 
