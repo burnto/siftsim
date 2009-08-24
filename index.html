@@ -15,6 +15,7 @@
 	   height: 170px;
 	   width: 166px;
 	   background: transparent url(images/sift.png) no-repeat center center;
+	   cursor: move;
 	 }
 	 
 	 div.siftable canvas {
@@ -53,13 +54,9 @@
   $(function() {
     siftables = SiftSim.init("#siftables", {num: 8, tolerance: 15});
     $("form.controls input[name='add']").click(SiftSim.add);
-    // $.getScript("javascripts/apps/neighbor.js", function(){
-    //   // console.log('loaded')
-    // 
-    // });
   })
 </script>
-<script src="javascripts/apps/neighbor.js" type="text/javascript"></script>
+<script src="javascripts/apps/move.js" type="text/javascript"></script>
 <script type="text/javascript" charset="utf-8">
   $(function() {
     App.setup()

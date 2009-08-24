@@ -28,7 +28,7 @@ var SiftSim = function() {
       for(var i = 0; i < options.num; i++) {
         addSiftable();
       }
-      setInterval(tick, 50)
+      setInterval(tick, 30)
       return siftables;
     },
     
@@ -108,6 +108,8 @@ $.extend(Siftables.Block.prototype, {
     if(this._updateNeighbors() && this.neighbor) {
       this.neighbor(this);
     }
+    if(this.draw) 
+      this.draw(this);
   }
     
 });
