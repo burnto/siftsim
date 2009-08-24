@@ -1,3 +1,10 @@
+if(!Sift) 
+  var Sift = {};
+  
+Sift.Session = function(num) {
+  
+}
+
 var SiftSim = function() {
   var container, siftables, options;
       
@@ -68,6 +75,7 @@ Siftables.Block = function() {
 }()
 
 $.extend(Siftables.Block.prototype, {
+  
   _updateNeighbors: function() {
     var siftable = this;
     var newNeighbors = {};
