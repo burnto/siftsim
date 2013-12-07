@@ -71,8 +71,8 @@ Boid.prototype = {
     // sep.mult(2.0);
     // ali.mult(1.0);
     // coh.mult(1.0);
-    sep.mult(7.0);
-    ali.mult(5.0);
+    sep.mult(2.0);
+    ali.mult(1.0);
     coh.mult(1.0);
     // Add the force vectors to acceleration
     this.acc.add(sep);
